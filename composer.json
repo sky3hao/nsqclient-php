@@ -1,5 +1,5 @@
 {
-  "name": "moolex/nsqclient",
+  "name": "sky3hao/nsqclient",
   "keywords": ["nsq"],
   "license": "MIT",
   "require": {

@@ -15,7 +15,12 @@ class Endpoint
     /**
      * @var string
      */
-    private $lookupd = 'http://nsqlookupd.local.moyo.im:4161';
+    private $lookupd = 'http://127.0.0.1:4161';
+
+    /**
+     * @var string
+     */
+    private $nsqd = "http://127.0.0.1:4151";
 
     /**
      * @var string
@@ -24,10 +29,16 @@ class Endpoint
 
     /**
      * Endpoint constructor.
-     * @param $lookupd
-     * @throws InvalidLookupdException
      */
-    public function __construct($lookupd)
+    public function __construct()
+    {
+
+    }
+
+    /**
+     * @param $lookupd
+     */
+    public function setLookupd($lookupd)
     {
         $this->lookupd = $lookupd;
         $this->uniqueID = spl_object_hash($this);
@@ -38,6 +49,28 @@ class Endpoint
         {
             throw new InvalidLookupdException;
         }
+    }
+
+    /**
+     * @param $nsqd
+     */
+    public function setNsqd($nsqd)
+    {
+        // checks
+        $parsed = parse_url($nsqd);
+        if (!isset($parsed['host']))
+        {
+            throw new InvalidLookupdException;
+        }
+        $this->nsqd = $nsqd;
+    }
+
+    /**
+     * @return string
+     */
+    public function getNsqd()
+    {
+        return $this->nsqd;
     }
 
     /**

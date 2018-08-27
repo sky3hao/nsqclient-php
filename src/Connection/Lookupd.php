@@ -21,6 +21,11 @@ class Lookupd
     private static $queryFormat = '/lookup?topic=%s';
 
     /**
+     * @var string
+     */
+    private static $createTopic = '/topic/create?topic=%s';
+
+    /**
      * @var array
      */
     private static $caches = [];
@@ -28,10 +33,11 @@ class Lookupd
     /**
      * @param Endpoint $endpoint
      * @param $topic
+     * @param $switch
      * @return array
      * @throws LookupTopicException
      */
-    public static function getNodes(Endpoint $endpoint, $topic)
+    public static function getNodes(Endpoint $endpoint, $topic, $switch = true)
     {
         if (isset(self::$caches[$endpoint->getUniqueID()][$topic]))
         {
@@ -45,8 +51,15 @@ class Lookupd
         if ($error)
         {
             list($netErrNo, $netErrMsg) = $error;
-            Logger::ins()->error('Lookupd request failed', ['no' => $netErrNo, 'msg' => $netErrMsg]);
-            throw new LookupTopicException($netErrMsg, $netErrNo);
+
+            if ($netErrNo == 22 && $switch == true) {
+                $url = $endpoint->getNsqd() . sprintf(self::$createTopic, $topic);
+                HTTP::post($url, []);
+                return self::getNodes($endpoint, $topic, false);
+            } else {
+                Logger::ins()->error('Lookupd request failed', ['no' => $netErrNo, 'msg' => $netErrMsg]);
+                throw new LookupTopicException($netErrMsg, $netErrNo);
+            }
         }
         else
         {
