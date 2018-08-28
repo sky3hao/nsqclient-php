@@ -23,6 +23,11 @@ class Lookupd
     /**
      * @var string
      */
+    private static $nodesFind = '/nodes';
+
+    /**
+     * @var string
+     */
     private static $createTopic = '/topic/create?topic=%s';
 
     /**
@@ -53,7 +58,7 @@ class Lookupd
             list($netErrNo, $netErrMsg) = $error;
 
             if ($netErrNo == 22 && $switch == true) {
-                $url = $endpoint->getNsqd() . sprintf(self::$createTopic, $topic);
+                $url = self::getAvailabelNodeAddr($endpoint) . sprintf(self::$createTopic, $topic);
                 HTTP::post($url, []);
                 return self::getNodes($endpoint, $topic, false);
             } else {
@@ -69,11 +74,30 @@ class Lookupd
     }
 
     /**
+     * Get available Node-Address
+     *
+     * @param Endpoint $endpoint
+     * @return string
+     */
+    private static function getAvailabelNodeAddr(Endpoint $endpoint)
+    {
+        list($err, $rsRaw) = HTTP::get($endpoint->getLookupd() . self::$nodesFind);
+        if ($err) {
+            list($netErrNo, $netErrMsg) = $err;
+            throw new LookupTopicException($netErrMsg, $netErrNo);
+        }
+
+        $nodes = self::parseResult($rsRaw);
+        $node = $nodes[array_rand($nodes)];
+
+        return $node['host'] . ':' . $node['ports']['http'];
+    }
+    /**
      * @param $rawJson
      * @param $scopeTopic
      * @return array
      */
-    private static function parseResult($rawJson, $scopeTopic)
+    private static function parseResult($rawJson, $scopeTopic = '')
     {
         $result = json_decode($rawJson, true);
 
